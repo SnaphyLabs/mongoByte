@@ -7,7 +7,10 @@ import (
 	"context"
 	"github.com/SnaphyLabs/SnaphyByte/resource"
 	"github.com/SnaphyLabs/SnaphyByte/models"
+	"github.com/SnaphyLabs/SnaphyByte/collections"
 )
+
+
 
 
 type mongoItem struct {
@@ -18,6 +21,7 @@ type mongoItem struct {
 	Type    string                 `bson:"_type"`
 	Payload map[string]interface{} `bson:",inline"`
 }
+
 
 
 
@@ -43,7 +47,7 @@ func newMongoItem(i *models.BaseModel) *mongoItem {
 
 
 
-// newItem converts a back mongoItem into a resource.Item
+// newItem converts a back mongoItem into a *models.BaseModel
 func newItem(i *mongoItem) *models.BaseModel {
 	// Add the id back (we use the same map hoping the mongoItem won't be stored back)
 	i.Payload["id"] = i.ID
@@ -59,8 +63,11 @@ func newItem(i *mongoItem) *models.BaseModel {
 
 
 
+
 // Handler handles resource storage in a MongoDB collection.
 type Handler func(ctx context.Context) (*mgo.Collection, error)
+
+
 
 // NewHandler creates an new mongo handler
 func NewHandler(s *mgo.Session, db, collection string) Handler {
@@ -101,10 +108,14 @@ func (m Handler) c(ctx context.Context) (*mgo.Collection, error) {
 	return c, nil
 }
 
+
+
 // close returns a mgo.Collection's session to the connection pool.
 func (m Handler) close(c *mgo.Collection) {
 	c.Database.Session.Close()
 }
+
+
 
 // Insert inserts new items in the mongo collection
 func (m Handler) Insert(ctx context.Context, items []*models.BaseModel) error {
@@ -127,6 +138,7 @@ func (m Handler) Insert(ctx context.Context, items []*models.BaseModel) error {
 	}
 	return err
 }
+
 
 
 
@@ -187,6 +199,7 @@ func (m Handler) Delete(ctx context.Context, item *models.BaseModel) error {
 }
 
 
+
 // Clear clears all items from the mongo collection matching the lookup
 func (m Handler) Clear(ctx context.Context, lookup *resource.Lookup) (int, error) {
 	q, err := getQuery(lookup)
@@ -211,7 +224,7 @@ func (m Handler) Clear(ctx context.Context, lookup *resource.Lookup) (int, error
 
 
 // Find items from the mongo collection matching the provided lookup
-func (m Handler) Find(ctx context.Context, lookup *resource.Lookup, offset, limit int) (*resource.ItemList, error) {
+func (m Handler) Find(ctx context.Context, lookup *resource.Lookup, offset, limit int) (*collections.BaseModelList, error) {
 	q, err := getQuery(lookup)
 	if err != nil {
 		return nil, err
@@ -244,7 +257,7 @@ func (m Handler) Find(ctx context.Context, lookup *resource.Lookup, offset, limi
 	iter := query.Iter()
 	// Total is set to -1 because we have no easy way with Mongodb to to compute this value
 	// without performing two requests.
-	list := &resource.ItemList{Total: -1, Items: []*resource.Item{}}
+	list := &collections.BaseModelList{Total: -1, Models: []*models.BaseModel{}}
 	for iter.Next(&mItem) {
 		// Check if context is still ok before to continue
 		if err = ctx.Err(); err != nil {
@@ -252,18 +265,20 @@ func (m Handler) Find(ctx context.Context, lookup *resource.Lookup, offset, limi
 			iter.Close()
 			return nil, err
 		}
-		list.Items = append(list.Items, newItem(&mItem))
+		list.Models = append(list.Models, newItem(&mItem))
 	}
 	if err := iter.Close(); err != nil {
 		return nil, err
 	}
 	// If the number of returned elements is lower than requested limit, or not
 	// limit is requested, we can deduce the total number of element for free.
-	if limit == -1 || len(list.Items) < limit {
-		list.Total = offset + len(list.Items)
+	if limit == -1 || len(list.Models) < limit {
+		list.Total = offset + len(list.Models)
 	}
 	return list, err
 }
+
+
 
 // Count counts the number items matching the lookup filter
 func (m Handler) Count(ctx context.Context, lookup *resource.Lookup) (int, error) {
