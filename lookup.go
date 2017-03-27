@@ -8,7 +8,7 @@ import (
 )
 
 //Name of collection in mongo db..
-const COLLECTION  = "_collection_type_byte";
+const COLLECTION  = "_collection_type_byte"
 
 // getField translate a schema field into a MongoDB field:
 //

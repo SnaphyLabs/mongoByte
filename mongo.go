@@ -18,7 +18,7 @@ type mongoItem struct {
 	ETag    string                 `bson:"_etag"`
 	Updated time.Time              `bson:"_updated"`
 	Created time.Time              `bson:"_created"`
-	Type    string                 `bson:"_type"`
+	Type    string                 `bson:"_collection_type_byte"`
 	Payload map[string]interface{} `bson:",inline"`
 }
 
