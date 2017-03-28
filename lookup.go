@@ -20,10 +20,12 @@ func getField(f string) string {
 	return f
 }
 
+
 // getQuery transform a resource.Lookup into a Mongo query
 func getQuery(l *resource.Lookup) (bson.M, error) {
-	return translateQuery(l.Filter())
+	return translateQuery(*l.Filter())
 }
+
 
 // getSort transform a resource.Lookup into a Mongo sort list.
 // If the sort list is empty, fallback to _id.
