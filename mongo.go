@@ -238,6 +238,16 @@ func (m Handler) Find(ctx context.Context, lookup *resource.Lookup, offset, limi
 	var mItem mongoItem
 	query := c.Find(q).Sort(s...)
 
+	//Add specific fields only..
+	if lookup.Field() != nil{
+		//Select fields only to display..
+		fields, err := translateField(lookup.Field())
+		if err != nil{
+			return nil, err
+		}
+		query.Select(fields)
+	}
+
 	if offset > 0 {
 		query.Skip(offset)
 	}

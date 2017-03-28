@@ -44,6 +44,16 @@ func getSort(l *resource.Lookup) []string {
 }
 
 
+//Translate fields into bson to fetch specific fields only..
+func translateField(fields []string)  (bson.M, error)  {
+	b := bson.M{}
+	for _, f := range fields{
+		b[f] = 1
+	}
+	return b, nil
+}
+
+
 
 
 //Translate Query build in Byte Query into Schema Query.
