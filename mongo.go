@@ -8,6 +8,7 @@ import (
 	"github.com/SnaphyLabs/SnaphyByte/resource"
 	"github.com/SnaphyLabs/SnaphyByte/models"
 	"github.com/SnaphyLabs/SnaphyByte/collections"
+	"fmt"
 )
 
 
@@ -151,7 +152,7 @@ func (m Handler) Update(ctx context.Context, item *models.BaseModel, original *m
 	}
 	defer m.close(c)
 	//Update where
-	err = c.Update(bson.M{"_id": original.ID, "_etag": original.ETag, "_type": original.Type}, mItem)
+	err = c.Update(bson.M{"_id": original.ID, "_etag": original.ETag, "_collection_type_byte": original.Type}, mItem)
 	if err == mgo.ErrNotFound {
 		// Determine if the item is not found or if the item is found but etag missmatch
 		var count int
@@ -171,11 +172,11 @@ func (m Handler) Update(ctx context.Context, item *models.BaseModel, original *m
 }
 
 
-
+//TODO: For test purpose only..
 // Update replace an item by a new one in the mongo collection
 func (m Handler) Set(ctx context.Context, item *models.BaseModel, original *models.BaseModel) error {
 	//Calculate new ETAG..
-	mItem := newMongoItem(item)
+	//mItem := newMongoItem(item)
 	c, err := m.c(ctx)
 	if err != nil {
 		return err
@@ -192,8 +193,16 @@ func (m Handler) Set(ctx context.Context, item *models.BaseModel, original *mode
 	   }
 	)
 	*/
+	/*json, err := json.Marshal(mItem)
+	if err != nil{
+		return err
+	}else{
+		fmt.Println(string(json))
+	}*/
+
 	//Update where
-	err = c.Update(bson.M{"_id": original.ID, "_etag": original.ETag, "_type": original.Type}, bson.M{ "$set": mItem} )
+	err = c.Update(bson.M{"_id": original.ID, "_etag": original.ETag, "_collection_type_byte": original.Type}, bson.M{ "$set": item} )
+	fmt.Println(original.ID, original.ETag, original.Type)
 	if err == mgo.ErrNotFound {
 		// Determine if the item is not found or if the item is found but etag missmatch
 		var count int

@@ -147,6 +147,9 @@ func TestInsert(t *testing.T)  {
 		}else{
 			//Now save the
 			book1.NewModel(BOOK_TYPE)
+			book2.NewModel(BOOK_TYPE)
+			book3.NewModel(BOOK_TYPE)
+			book4.NewModel(BOOK_TYPE)
 
 
 			book1.Payload["authorId"] = author1.ID
@@ -156,6 +159,7 @@ func TestInsert(t *testing.T)  {
 			//Now save the model..
 			err := handler.Insert(ctx, []*models.BaseModel{book1, book2, book3, book4})
 			if err != nil{
+				//fmt.Println(err)
 				t.Error(err)
 			}
 		}
@@ -171,15 +175,15 @@ func TestForFindingUpdateAPortionLargeThan16Mb(t *testing.T){
 		Payload: map[string]interface{}{
 			"firstName": fake.FirstName(),
 			"lastName": fake.LastName(),
-			"email": fake.EmailAddress(),
+			/*"email": fake.EmailAddress(),
 			"password": fake.SimplePassword(),
 			"userName": fake.UserName(),
-			"age": fake.DigitsN(2),
+			"age": fake.DigitsN(2),*/
 		},
 	}
 	//Now save authors..data..
 	author3.NewModel(AUTHOR_TYPE)
-
+	fmt.Println(author3.ID)
 	_, err := json.Marshal(author3)
 	if err != nil{
 		t.Error(err)
@@ -192,10 +196,6 @@ func TestForFindingUpdateAPortionLargeThan16Mb(t *testing.T){
 		}else{
 			//Adding data till mongodb memory exausts..
 			for true{
-
-				author := &models.BaseModel{
-					Payload: map[string]interface{}{},
-				}
 
 
 				book := &models.BaseModel{
@@ -222,12 +222,15 @@ func TestForFindingUpdateAPortionLargeThan16Mb(t *testing.T){
 				//Now save the
 				book.NewModel(BOOK_TYPE)
 				id := book.ID.(string)
+				data := make(map[string]interface{})
+
 				//author3.Payload[book.ID] = book
 				key := "Book." + id
-				author3.Payload[key] = book
+				data[key] = book
 				//Now save the model..
-				err := handler.Set(ctx, author, author3)
+				err := handler.Set(ctx, book, author3)
 				if err != nil{
+					fmt.Println(err)
 					t.Error(err)
 				}else{
 					fmt.Println("Data Updated")
