@@ -213,16 +213,21 @@ func TestForFindingUpdateAPortionLargeThan16Mb(t *testing.T){
 
 				//Now save the
 				book.NewModel(BOOK_TYPE)
-				//author3.Payload[book.ID] = book
-				key := "Book." + string(book.ID)
-				author3.Payload[key] = book
-				//Now save the model..
-				err := handler.Insert(ctx, []*models.BaseModel{book1, book2, book3, book4})
-				if err != nil{
-					t.Error(err)
-				}else{
-					fmt.Println("Data Updated")
+				if id, ok := book.ID.(string); ok != nil{
+					//author3.Payload[book.ID] = book
+					key := "Book." + id
+					author3.Payload[key] = book
+					//Now save the model..
+					err := handler.Insert(ctx, []*models.BaseModel{book1, book2, book3, book4})
+					if err != nil{
+						t.Error(err)
+					}else{
+						fmt.Println("Data Updated")
+					}
+				} else{
+					fmt.Println("Error reported Data Updated")
 				}
+
 			}
 
 		}
