@@ -82,16 +82,7 @@ func init()  {
 		},
 	}
 
-	author3 = &models.BaseModel{
-		Payload: map[string]interface{}{
-			"firstName": fake.FirstName(),
-			"lastName": fake.LastName(),
-			"email": fake.EmailAddress(),
-			"password": fake.SimplePassword(),
-			"userName": fake.UserName(),
-			"age": fake.DigitsN(2),
-		},
-	}
+
 
 	book1 = &models.BaseModel{
 		Payload:map[string]interface{}{
@@ -142,8 +133,8 @@ func init()  {
 func TestInsert(t *testing.T)  {
 	fmt.Print("Testing for insert")
 	//Now save authors..data..
-	author3.NewModel(AUTHOR_TYPE)
-
+	author1.NewModel(AUTHOR_TYPE)
+	author2.NewModel(AUTHOR_TYPE)
 	_, err := json.Marshal(author1)
 	if err != nil{
 		t.Error(err)
@@ -175,6 +166,17 @@ func TestInsert(t *testing.T)  {
 
 func TestForFindingUpdateAPortionLargeThan16Mb(t *testing.T){
 	fmt.Print("Testing for insert")
+
+	author3 = &models.BaseModel{
+		Payload: map[string]interface{}{
+			"firstName": fake.FirstName(),
+			"lastName": fake.LastName(),
+			"email": fake.EmailAddress(),
+			"password": fake.SimplePassword(),
+			"userName": fake.UserName(),
+			"age": fake.DigitsN(2),
+		},
+	}
 	//Now save authors..data..
 	author3.NewModel(AUTHOR_TYPE)
 
@@ -190,6 +192,12 @@ func TestForFindingUpdateAPortionLargeThan16Mb(t *testing.T){
 		}else{
 			//Adding data till mongodb memory exausts..
 			for true{
+
+				author := &models.BaseModel{
+					Payload: map[string]interface{}{},
+				}
+
+
 				book := &models.BaseModel{
 					Payload: map[string]interface{}{
 						"name":  fake.Product(),
@@ -213,21 +221,17 @@ func TestForFindingUpdateAPortionLargeThan16Mb(t *testing.T){
 
 				//Now save the
 				book.NewModel(BOOK_TYPE)
-				if id, ok := book.ID.(string); ok != nil{
-					//author3.Payload[book.ID] = book
-					key := "Book." + id
-					author3.Payload[key] = book
-					//Now save the model..
-					err := handler.Insert(ctx, []*models.BaseModel{book1, book2, book3, book4})
-					if err != nil{
-						t.Error(err)
-					}else{
-						fmt.Println("Data Updated")
-					}
-				} else{
-					fmt.Println("Error reported Data Updated")
+				id := book.ID.(string)
+				//author3.Payload[book.ID] = book
+				key := "Book." + id
+				author3.Payload[key] = book
+				//Now save the model..
+				err := handler.Set(ctx, author, author3)
+				if err != nil{
+					t.Error(err)
+				}else{
+					fmt.Println("Data Updated")
 				}
-
 			}
 
 		}

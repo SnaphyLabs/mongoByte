@@ -174,6 +174,7 @@ func (m Handler) Update(ctx context.Context, item *models.BaseModel, original *m
 
 // Update replace an item by a new one in the mongo collection
 func (m Handler) Set(ctx context.Context, item *models.BaseModel, original *models.BaseModel) error {
+	//Calculate new ETAG..
 	mItem := newMongoItem(item)
 	c, err := m.c(ctx)
 	if err != nil {
