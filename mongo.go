@@ -172,6 +172,47 @@ func (m Handler) Update(ctx context.Context, item *models.BaseModel, original *m
 
 
 
+// Update replace an item by a new one in the mongo collection
+func (m Handler) Set(ctx context.Context, item *models.BaseModel, original *models.BaseModel) error {
+	mItem := newMongoItem(item)
+	c, err := m.c(ctx)
+	if err != nil {
+		return err
+	}
+	defer m.close(c)
+	/*
+	db.products.update(
+	   { _id: 100 },
+	   { $set:
+	      {
+		"tags.1": "rain gear",
+		"ratings.0.rating": 2
+	      }
+	   }
+	)
+	*/
+	//Update where
+	err = c.Update(bson.M{"_id": original.ID, "_etag": original.ETag, "_type": original.Type}, bson.M{ "$set": mItem} )
+	if err == mgo.ErrNotFound {
+		// Determine if the item is not found or if the item is found but etag missmatch
+		var count int
+		count, err = c.FindId(original.ID).Count()
+		if err != nil {
+			// The find returned an unexpected err, just forward it with no mapping
+		} else if count == 0 {
+			err = resource.ErrNotFound
+		} else if ctx.Err() != nil {
+			err = ctx.Err()
+		} else {
+			// If the item were found, it means that its etag didn't match
+			err = resource.ErrConflict
+		}
+	}
+	return err
+}
+
+
+
 // Delete deletes an item from the mongo collection
 func (m Handler) Delete(ctx context.Context, item *models.BaseModel) error {
 	c, err := m.c(ctx)
@@ -282,7 +323,7 @@ func (m Handler) Find(ctx context.Context, lookup *resource.Lookup, offset, limi
 	}
 	// If the number of returned elements is lower than requested limit, or not
 	// limit is requested, we can deduce the total number of element for free.
-	if limit == -1 || len(list.Models) < limit {
+	if limit == -1 || len(list.Models) <= limit {
 		list.Total = offset + len(list.Models)
 	}
 	return list, err

@@ -35,6 +35,7 @@ var (
 	//Author models
 	author1 *models.BaseModel
 	author2 *models.BaseModel
+	author3 *models.BaseModel
 	ctx          context.Context
 )
 
@@ -81,6 +82,17 @@ func init()  {
 		},
 	}
 
+	author3 = &models.BaseModel{
+		Payload: map[string]interface{}{
+			"firstName": fake.FirstName(),
+			"lastName": fake.LastName(),
+			"email": fake.EmailAddress(),
+			"password": fake.SimplePassword(),
+			"userName": fake.UserName(),
+			"age": fake.DigitsN(2),
+		},
+	}
+
 	book1 = &models.BaseModel{
 		Payload:map[string]interface{}{
 			"name": fake.Product(),
@@ -117,7 +129,7 @@ func init()  {
 			"pages": fake.DigitsN(3),
 			//"authorId":
 			"price": fake.DigitsN(4),
-			//"description": fake.Paragraphs(),
+			"description": fake.Paragraphs(),
 		},
 	}
 
@@ -130,8 +142,7 @@ func init()  {
 func TestInsert(t *testing.T)  {
 	fmt.Print("Testing for insert")
 	//Now save authors..data..
-	author1.NewModel(AUTHOR_TYPE)
-	author2.NewModel(AUTHOR_TYPE)
+	author3.NewModel(AUTHOR_TYPE)
 
 	_, err := json.Marshal(author1)
 	if err != nil{
@@ -145,9 +156,7 @@ func TestInsert(t *testing.T)  {
 		}else{
 			//Now save the
 			book1.NewModel(BOOK_TYPE)
-			book2.NewModel(BOOK_TYPE)
-			book3.NewModel(BOOK_TYPE)
-			book4.NewModel(BOOK_TYPE)
+
 
 			book1.Payload["authorId"] = author1.ID
 			book2.Payload["authorId"] = author2.ID
@@ -163,6 +172,64 @@ func TestInsert(t *testing.T)  {
 }
 
 
+
+func TestForFindingUpdateAPortionLargeThan16Mb(t *testing.T){
+	fmt.Print("Testing for insert")
+	//Now save authors..data..
+	author3.NewModel(AUTHOR_TYPE)
+
+	_, err := json.Marshal(author3)
+	if err != nil{
+		t.Error(err)
+	}else{
+		ctx = context.Background()
+		//Now save the model..
+		err = handler.Insert(ctx, []*models.BaseModel{author3})
+		if err != nil{
+			t.Error(err)
+		}else{
+			//Adding data till mongodb memory exausts..
+			for true{
+				book := &models.BaseModel{
+					Payload: map[string]interface{}{
+						"name":  fake.Product(),
+						"pages": fake.DigitsN(3),
+						//"authorId":
+						"price": fake.DigitsN(4),
+						"description": fake.Paragraphs(),
+						"anotherDescription": fake.Paragraphs(),
+						"anotherDescription1": fake.Paragraphs(),
+						"anotherDescription2": fake.Paragraphs(),
+						"anotherDescription3": fake.Paragraphs(),
+						"anotherDescription4": fake.Paragraphs(),
+						"anotherDescription5": fake.Paragraphs(),
+						"anotherDescription6": fake.Paragraphs(),
+						"anotherDescription7": fake.Paragraphs(),
+						"anotherDescription8": fake.Paragraphs(),
+						"anotherDescription9": fake.Paragraphs(),
+						"anotherDescription10": fake.Paragraphs(),
+					},
+				}
+
+				//Now save the
+				book.NewModel(BOOK_TYPE)
+				//author3.Payload[book.ID] = book
+				key := "Book." + string(book.ID)
+				author3.Payload[key] = book
+				//Now save the model..
+				err := handler.Insert(ctx, []*models.BaseModel{book1, book2, book3, book4})
+				if err != nil{
+					t.Error(err)
+				}else{
+					fmt.Println("Data Updated")
+				}
+			}
+
+		}
+	}
+}
+
+
 //TODO: Test for robustness and speed...
 
 func TestFind(t *testing.T)  {
@@ -171,13 +238,13 @@ func TestFind(t *testing.T)  {
 
 	//Preparing a raw query..
 	rawQuery1 := map[string]interface{}{
-		"$collection": "author",
+		"collection": "author",
 		"firstName": "Lisa",
 	}
 
 	//Preparing a raw query..
 	rawQuery2 := map[string]interface{}{
-		"$collection": "book",
+		"collection": "book",
 		//"firstName": "Jesse",
 	}
 
